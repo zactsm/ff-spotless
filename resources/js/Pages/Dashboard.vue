@@ -144,6 +144,16 @@ watch(
         localTasks.value = props.tasks.map(normalizeTask);
         selectedDate.value = props.currentDate;
         adminDate.value = props.currentDate;
+
+        // Auto-collapse completed sessions by default
+        collapsedChecklistSessions.value.clear();
+        ['morning', 'afternoon', 'evening'].forEach(key => {
+            const tasks = tasksFor(key);
+            if (tasks.length && tasks.every(t => t.completed)) {
+                collapsedChecklistSessions.value.add(key);
+            }
+        });
+        collapsedChecklistSessions.value = new Set(collapsedChecklistSessions.value);
     },
     { immediate: true },
 );
@@ -158,6 +168,7 @@ const isChecklistDateToday = computed(() => {
     return selectedDate.value === today;
 });
 
+const slideDirection = ref('slide-next');
 const collapsedChecklistSessions = ref(new Set());
 const collapsedHistorySessions = ref(new Set());
 
@@ -203,6 +214,12 @@ function isHistorySessionCollapsible(sessionKey) {
 
 watch(selectedDate, () => {
     collapsedChecklistSessions.value.clear();
+    ['morning', 'afternoon', 'evening'].forEach(key => {
+        const tasks = tasksFor(key);
+        if (tasks.length && tasks.every(t => t.completed)) {
+            collapsedChecklistSessions.value.add(key);
+        }
+    });
     collapsedChecklistSessions.value = new Set(collapsedChecklistSessions.value);
 });
 
@@ -408,6 +425,7 @@ function visitChecklist({ date = null, fromWelcome = false } = {}) {
     };
 
     router.get('/checklist', data, {
+        preserveState: true,
         preserveScroll: true,
         onStart: () => {
             isNavigating.value = true;
@@ -433,6 +451,7 @@ function visitChecklist({ date = null, fromWelcome = false } = {}) {
 }
 
 function adjustChecklistDate(offset) {
+    slideDirection.value = offset > 0 ? 'slide-next' : 'slide-prev';
     const nextDate = dateWithOffset(selectedDate.value, offset);
 
     if (nextDate) {
@@ -441,6 +460,18 @@ function adjustChecklistDate(offset) {
 }
 
 function resetToToday() {
+    const today = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+
+    if (selectedDate.value > today) {
+        slideDirection.value = 'slide-prev';
+    } else if (selectedDate.value < today) {
+        slideDirection.value = 'slide-next';
+    }
     visitChecklist();
 }
 
@@ -540,6 +571,7 @@ function openAdmin(date = null) {
     const data = date ? { date } : {};
 
     router.get('/admin', data, {
+        preserveState: true,
         preserveScroll: true,
         onStart: () => {
             isNavigating.value = true;
@@ -551,6 +583,7 @@ function openAdmin(date = null) {
 }
 
 function adjustAdminDate(offset) {
+    slideDirection.value = offset > 0 ? 'slide-next' : 'slide-prev';
     const nextDate = dateWithOffset(adminDate.value, offset);
 
     if (nextDate) {
@@ -559,6 +592,18 @@ function adjustAdminDate(offset) {
 }
 
 function resetAdminDate() {
+    const today = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+
+    if (adminDate.value > today) {
+        slideDirection.value = 'slide-prev';
+    } else if (adminDate.value < today) {
+        slideDirection.value = 'slide-next';
+    }
     openAdmin();
 }
 
@@ -707,7 +752,6 @@ function completedBy(entry) {
 <template>
     <div class="min-h-screen bg-zinc-950 p-0 font-sans text-zinc-100 antialiased sm:p-4">
         <main class="relative mx-auto flex min-h-screen w-full max-w-md flex-col overflow-hidden bg-[#121212] sm:min-h-[840px] sm:max-h-[900px] sm:rounded-[36px] sm:border sm:border-zinc-700 sm:shadow-[0_24px_64px_rgba(0,0,0,0.8)]">
-            <div class="absolute inset-x-0 top-0 z-50 h-1.5 bg-gradient-to-r from-[#ED4264] to-[#FFEDBC]"></div>
 
             <div v-if="actionError" class="absolute inset-x-4 top-5 z-[60]" aria-live="polite">
                 <p
@@ -789,7 +833,7 @@ function completedBy(entry) {
                 <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md">
                     <div class="min-w-0">
                         <p class="text-xs font-semibold tracking-wide text-zinc-500">FF SPOTLESS</p>
-                        <p class="truncate text-sm font-semibold text-zinc-200">Senarai semak harian</p>
+                        <p class="truncate text-sm font-semibold text-zinc-200">Hello, Kak Jihan!</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold" :class="syncState === 'saving' ? 'border-amber-500/25 bg-amber-500/10 text-amber-300' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400'">
@@ -807,77 +851,85 @@ function completedBy(entry) {
                     </div>
                 </header>
 
-                <section class="border-b border-zinc-800/60 bg-[#121212] px-5 py-4">
+                <section class="relative border-b border-zinc-800/60 bg-[#121212] px-5 pb-10 pt-2">
                     <div class="flex items-center justify-between gap-3">
                         <button type="button" :disabled="isNavigating" class="rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-zinc-400 transition hover:text-zinc-200 disabled:opacity-50" aria-label="Hari sebelumnya" @click="adjustChecklistDate(-1)">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
                         </button>
                         <div class="min-w-0 text-center">
-                            <p class="truncate text-sm font-bold text-zinc-200">{{ displayDate }}</p>
-                            <button v-if="!isChecklistDateToday" type="button" class="mt-2 inline-flex items-center rounded-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-950 shadow-md shadow-rose-950/20 transition hover:brightness-110 active:scale-95 animate-button-glow" @click="resetToToday">Ke hari ini</button>
+                            <div class="h-5 flex items-center justify-center">
+                                <Transition :name="slideDirection" mode="out-in">
+                                    <p :key="selectedDate" class="truncate text-sm font-bold text-zinc-200">{{ displayDate }}</p>
+                                </Transition>
+                            </div>
                         </div>
                         <button type="button" :disabled="isNavigating" class="rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-zinc-400 transition hover:text-zinc-200 disabled:opacity-50" aria-label="Hari berikutnya" @click="adjustChecklistDate(1)">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
                         </button>
                     </div>
+                    <button v-if="!isChecklistDateToday" type="button" class="absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-950 shadow-md shadow-rose-950/20 transition hover:brightness-110 active:scale-95 animate-button-glow" @click="resetToToday">Ke hari ini</button>
                 </section>
 
                 <div class="h-1 bg-zinc-900"><div class="h-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] transition-all duration-500" :style="{ width: `${progressPercentage}%` }"></div></div>
 
-                <div class="flex items-center justify-between px-5 pt-4 text-xs text-zinc-500">
+                <div class="flex items-center justify-between px-5 pt-4 text-xs text-zinc-400">
                     <span>{{ completedTaskCount }} daripada {{ localTasks.length }} selesai</span>
-                    <span>{{ progressPercentage }}%</span>
+                    <span class="font-semibold text-zinc-300">{{ progressPercentage }}%</span>
                 </div>
 
                 <main class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-                    <div v-if="isChecklistLocked" class="mb-5 flex gap-3 rounded-xl border border-zinc-700 bg-zinc-900/50 p-3.5 text-xs text-zinc-400">
-                        <svg class="mt-0.5 h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z" /></svg>
-                        <div>
-                            <p class="font-bold text-zinc-300">Paparan dikunci</p>
-                            <p class="mt-0.5">Senarai semak lampau dan masa hadapan adalah baca sahaja.</p>
-                        </div>
-                    </div>
-
-                    <div v-if="!localTasks.length" class="rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/30 px-5 py-10 text-center">
-                        <p class="text-sm font-semibold text-zinc-300">Tiada tugasan untuk tarikh ini</p>
-                        <p class="mt-2 text-xs leading-relaxed text-zinc-500">Admin boleh menambah template tugasan melalui admin dashboard.</p>
-                    </div>
-
-                    <div v-else class="space-y-7">
-                        <section v-for="section in sections" :key="section.key" v-show="tasksFor(section.key).length" class="space-y-3">
-                            <h2 class="px-1 flex items-center justify-between text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
-                                <div class="flex items-center gap-2">
-                                    <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                                    <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-                                    <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                                    <span v-else>•</span>
-                                    <span>{{ section.groupLabel }}</span>
+                    <Transition :name="slideDirection" mode="out-in">
+                        <div :key="selectedDate" class="space-y-7">
+                            <div v-if="isChecklistLocked" class="flex gap-3 rounded-xl border border-zinc-700 bg-zinc-900/50 p-3.5 text-xs text-zinc-400">
+                                <svg class="mt-0.5 h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z" /></svg>
+                                <div>
+                                    <p class="font-bold text-zinc-300">Paparan dikunci</p>
+                                    <p class="mt-0.5">Senarai semak lampau dan masa hadapan adalah baca sahaja.</p>
                                 </div>
-                                <button v-if="isChecklistSessionCollapsible(section.key)" type="button" class="p-1 text-zinc-500 hover:text-zinc-300 transition" @click="toggleChecklistSession(section.key)" aria-label="Kecilkan/besarkan senarai">
-                                    <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedChecklistSessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                            </h2>
-                            <div v-show="!collapsedChecklistSessions.has(section.key)" class="space-y-2">
-                                <button
-                                    v-for="task in tasksFor(section.key)"
-                                    :key="task.id"
-                                    type="button"
-                                    :disabled="isChecklistLocked || savingTaskIds.has(task.id)"
-                                    :aria-pressed="task.completed"
-                                    class="flex w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition active:scale-[0.99] disabled:cursor-not-allowed"
-                                    :class="isChecklistLocked ? 'border-zinc-800 bg-zinc-900/20 opacity-45' : task.completed ? 'border-[#ED4264]/20 bg-zinc-900/50' : 'border-zinc-700/70 bg-zinc-900 hover:bg-zinc-800/90'"
-                                    @click="toggleTask(task)"
-                                >
-                                    <span class="text-sm font-medium leading-relaxed transition" :class="task.completed ? 'text-zinc-500 line-through decoration-zinc-700' : 'text-zinc-200'">{{ task.text }}</span>
-                                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border-2 transition" :class="task.completed ? 'border-[#ED4264] bg-[#ED4264] text-white' : 'border-zinc-600 text-transparent'">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" /></svg>
-                                    </span>
-                                </button>
                             </div>
-                        </section>
-                    </div>
+
+                            <div v-if="!localTasks.length" class="rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/30 px-5 py-10 text-center">
+                                <p class="text-sm font-semibold text-zinc-300">Tiada tugasan untuk tarikh ini</p>
+                                <p class="mt-2 text-xs leading-relaxed text-zinc-500">Admin boleh menambah template tugasan melalui admin dashboard.</p>
+                            </div>
+
+                            <div v-else class="space-y-7">
+                                <section v-for="section in sections" :key="section.key" v-show="tasksFor(section.key).length" class="space-y-3">
+                                    <h2 class="px-1 flex items-center justify-between text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
+                                        <div class="flex items-center gap-2">
+                                            <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                                            <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                                            <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                            <span v-else>•</span>
+                                            <span>{{ section.groupLabel }}</span>
+                                        </div>
+                                        <button v-if="isChecklistSessionCollapsible(section.key)" type="button" class="p-1 text-zinc-400 hover:text-zinc-200 transition" @click="toggleChecklistSession(section.key)" aria-label="Kecilkan/besarkan senarai">
+                                            <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedChecklistSessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                    </h2>
+                                    <div v-show="!collapsedChecklistSessions.has(section.key)" class="space-y-2">
+                                        <button
+                                            v-for="task in tasksFor(section.key)"
+                                            :key="task.id"
+                                            type="button"
+                                            :disabled="isChecklistLocked || savingTaskIds.has(task.id)"
+                                            :aria-pressed="task.completed"
+                                            class="flex w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition active:scale-[0.99] disabled:cursor-not-allowed"
+                                            :class="isChecklistLocked ? 'border-zinc-800 bg-zinc-900/20 opacity-45' : task.completed ? 'border-[#ED4264]/20 bg-zinc-900/50' : 'border-zinc-700/70 bg-zinc-900 hover:bg-zinc-800/90'"
+                                            @click="toggleTask(task)"
+                                        >
+                                            <span class="text-sm font-medium leading-relaxed transition" :class="task.completed ? 'text-zinc-500 line-through decoration-zinc-700' : 'text-zinc-200'">{{ task.text }}</span>
+                                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border-2 transition" :class="task.completed ? 'border-[#ED4264] bg-[#ED4264] text-white' : 'border-zinc-600 text-transparent'">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" /></svg>
+                                            </span>
+                                        </button>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </Transition>
                 </main>
             </section>
 
@@ -948,66 +1000,84 @@ function completedBy(entry) {
                 </header>
 
                 <main class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-                    <section v-if="adminActiveTab === 'history'" class="mb-7 rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4">
-                        <div class="flex items-center justify-between gap-3">
-                            <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian sebelumnya" @click="adjustAdminDate(-1)">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
-                            </button>
-                            <div class="min-w-0 text-center">
-                                <h2 class="truncate text-sm font-bold text-zinc-200">History</h2>
-                                <p class="mt-0.5 text-xs transition-colors duration-300" :class="isAdminDateToday ? 'text-[#ED4264] font-semibold' : 'text-zinc-500'">{{ displayAdminDate }}</p>
-                            </div>
-                            <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian berikutnya" @click="adjustAdminDate(1)">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
-                            </button>
-                        </div>
-                        <button v-if="!isAdminDateToday" type="button" class="mt-3 w-full text-xs font-semibold text-[#FFB0BE] hover:text-[#FFEDBC]" @click="resetAdminDate">Papar hari ini</button>
-
-                        <div v-if="completedEntries.length" class="mt-4 border-t border-zinc-800 pt-4">
-                            <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
-                                <div class="h-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] transition-all duration-500" :style="{ width: `${adminProgressPercentage}%` }"></div>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between text-xs text-zinc-500">
-                                <span>{{ adminCompletedCount }} daripada {{ completedEntries.length }} selesai</span>
-                                <span class="font-semibold text-zinc-300">{{ adminProgressPercentage }}%</span>
-                            </div>
-                        </div>
-
-                        <div v-if="completedEntries.length" class="mt-4 space-y-6">
-                            <div v-for="section in sections" :key="section.key" v-show="historyFor(section.key).length" class="space-y-2">
-                                <h3 class="px-1 flex items-center justify-between text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
-                                    <div class="flex items-center gap-2">
-                                        <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                                        <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-                                        <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                                        <span v-else>•</span>
-                                        <span>{{ section.groupLabel }}</span>
+                    <div v-if="adminActiveTab === 'history'" class="mb-7 space-y-4">
+                        <!-- Date Header Wrapper -->
+                        <div class="relative rounded-2xl border border-zinc-700 bg-zinc-900/45 px-4 pb-10 pt-2.5">
+                            <div class="flex items-center justify-between gap-3">
+                                <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian sebelumnya" @click="adjustAdminDate(-1)">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
+                                </button>
+                                <div class="min-w-0 text-center">
+                                    <h2 class="truncate text-xs font-semibold tracking-wide text-zinc-500 uppercase">History</h2>
+                                    <div class="h-5 flex items-center justify-center mt-0.5">
+                                        <Transition :name="slideDirection" mode="out-in">
+                                            <p :key="adminDate" class="truncate text-sm font-bold text-zinc-200 transition-colors duration-300" :class="isAdminDateToday ? 'text-[#ED4264] font-semibold' : 'text-zinc-200'">{{ displayAdminDate }}</p>
+                                        </Transition>
                                     </div>
-                                    <button v-if="isHistorySessionCollapsible(section.key)" type="button" class="p-1 text-zinc-500 hover:text-zinc-300 transition" @click="toggleHistorySession(section.key)" aria-label="Kecilkan/besarkan senarai">
-                                        <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedHistorySessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-                                </h3>
-                                <div v-show="!collapsedHistorySessions.has(section.key)" class="space-y-2">
-                                    <article v-for="entry in historyFor(section.key)" :key="entry.id" class="rounded-xl border border-zinc-700/80 bg-[#121212] px-3 py-3">
-                                        <div class="flex items-start justify-between gap-3">
-                                            <p class="min-w-0 text-sm font-semibold leading-snug text-[#ededec]" :class="entry.isCompleted ? '' : 'opacity-70'">{{ completedTaskText(entry) }}</p>
-                                            <span class="shrink-0 rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" :class="entry.isCompleted ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-zinc-600 bg-zinc-800 text-zinc-400'">
-                                                {{ entry.isCompleted ? 'Selesai' : 'Belum Selesai' }}
-                                            </span>
-                                        </div>
-                                        <div v-if="entry.isCompleted" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
-                                            <span>{{ formatCompletedAt(entry.completedAt ?? entry.completed_at) }}</span>
-                                            <span>{{ completedBy(entry) }}</span>
-                                        </div>
-                                    </article>
                                 </div>
+                                <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian berikutnya" @click="adjustAdminDate(1)">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
+                                </button>
                             </div>
+                            <button v-if="!isAdminDateToday" type="button" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-950 shadow-md shadow-rose-950/20 transition hover:brightness-110 active:scale-95 animate-button-glow" @click="resetAdminDate">Ke hari ini</button>
                         </div>
-                        <p v-else class="mt-4 rounded-xl border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-500">Tiada rekod tugasan untuk tarikh ini.</p>
-                        <p v-if="completedPagination?.total !== undefined" class="mt-3 text-center text-[11px] text-zinc-600">{{ completedPagination.total }} tugasan selesai direkodkan.</p>
-                    </section>
+
+                        <!-- History Content Card -->
+                        <div class="rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4">
+                            <Transition :name="slideDirection" mode="out-in">
+                                <div :key="adminDate" class="space-y-4">
+                                    <div v-if="completedEntries.length">
+                                        <div class="border-b border-zinc-800 pb-4">
+                                            <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+                                                <div class="h-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] transition-all duration-500" :style="{ width: `${adminProgressPercentage}%` }"></div>
+                                            </div>
+                                            <div class="mt-2 flex items-center justify-between text-xs text-zinc-400">
+                                                <span>{{ adminCompletedCount }} daripada {{ completedEntries.length }} selesai</span>
+                                                <span class="font-semibold text-zinc-300">{{ adminProgressPercentage }}%</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4 space-y-6">
+                                            <div v-for="section in sections" :key="section.key" v-show="historyFor(section.key).length" class="space-y-2">
+                                                <h3 class="px-1 flex items-center justify-between text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
+                                                    <div class="flex items-center gap-2">
+                                                        <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                                                        <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                                                        <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                                        <span v-else>•</span>
+                                                        <span>{{ section.groupLabel }}</span>
+                                                    </div>
+                                                    <button v-if="isHistorySessionCollapsible(section.key)" type="button" class="p-1 text-zinc-400 hover:text-zinc-200 transition" @click="toggleHistorySession(section.key)" aria-label="Kecilkan/besarkan senarai">
+                                                        <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedHistorySessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </button>
+                                                </h3>
+                                                <div v-show="!collapsedHistorySessions.has(section.key)" class="space-y-2">
+                                                    <article v-for="entry in historyFor(section.key)" :key="entry.id" class="rounded-xl border border-zinc-700/80 bg-[#121212] px-3 py-3">
+                                                        <div class="flex items-start justify-between gap-3">
+                                                            <p class="min-w-0 text-sm font-semibold leading-snug text-[#ededec]" :class="entry.isCompleted ? '' : 'opacity-70'">{{ completedTaskText(entry) }}</p>
+                                                            <span class="shrink-0 rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" :class="entry.isCompleted ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-zinc-600 bg-zinc-800 text-zinc-400'">
+                                                                {{ entry.isCompleted ? 'Selesai' : 'Belum Selesai' }}
+                                                            </span>
+                                                        </div>
+                                                        <div v-if="entry.isCompleted" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
+                                                            <span>{{ formatCompletedAt(entry.completedAt ?? entry.completed_at) }}</span>
+                                                            <span>{{ completedBy(entry) }}</span>
+                                                        </div>
+                                                    </article>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <p class="rounded-xl border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-500">Tiada rekod tugasan untuk tarikh ini.</p>
+                                    </div>
+                                </div>
+                            </Transition>
+                        </div>
+                        <p v-if="completedPagination?.total !== undefined && completedEntries.length" class="mt-3 text-center text-[11px] text-zinc-600">{{ completedPagination.total }} tugasan selesai direkodkan.</p>
+                    </div>
 
                     <section v-else-if="adminActiveTab === 'templates'" class="mb-7 rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4">
                         <div class="mb-4">
@@ -1171,5 +1241,30 @@ function completedBy(entry) {
 }
 .animate-button-glow {
     animation: button-glow 2.2s infinite ease-in-out;
+}
+
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-next-enter-from {
+    transform: translateX(16px);
+    opacity: 0;
+}
+.slide-next-leave-to {
+    transform: translateX(-16px);
+    opacity: 0;
+}
+
+.slide-prev-enter-from {
+    transform: translateX(-16px);
+    opacity: 0;
+}
+.slide-prev-leave-to {
+    transform: translateX(16px);
+    opacity: 0;
 }
 </style>

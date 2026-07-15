@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">FF Spotless</title>
+  <desc id="desc">Tanda semak senarai semak pada latar belakang gradien hangat.</desc>
+  <defs>
+    <linearGradient id="background" x1="74" y1="46" x2="438" y2="466" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ED4264"/>
+      <stop offset="1" stop-color="#FFEDBC"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#background)"/>
+  <rect x="96" y="82" width="320" height="348" rx="48" fill="#121212" fill-opacity=".92"/>
+  <path d="M165 194h182M165 256h76M165 318h76" stroke="#FFEDBC" stroke-width="26" stroke-linecap="round"/>
+  <path d="m290 320 31 31 62-79" fill="none" stroke="#ED4264" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

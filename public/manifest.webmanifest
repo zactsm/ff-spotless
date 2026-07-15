@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "lang": "ms",
+  "name": "FF Spotless",
+  "short_name": "FF Spotless",
+  "description": "Operasi senarai semak mudah alih untuk kakitangan FF Spotless.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "/icons/ff-spotless-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ff-spotless-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

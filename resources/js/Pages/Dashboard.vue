@@ -895,7 +895,16 @@ function completedBy(entry) {
 
                             <div v-else class="space-y-7">
                                 <section v-for="section in sections" :key="section.key" v-show="tasksFor(section.key).length" class="space-y-3">
-                                    <h2 class="px-1 flex items-center justify-between text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
+                                    <component
+                                        :is="isChecklistSessionCollapsible(section.key) ? 'button' : 'h2'"
+                                        :type="isChecklistSessionCollapsible(section.key) ? 'button' : undefined"
+                                        class="w-full px-1 flex items-center justify-between text-base font-black uppercase tracking-wider text-left transition duration-200 outline-none"
+                                        :class="[
+                                            sessionTextClass(section.key),
+                                            isChecklistSessionCollapsible(section.key) ? 'cursor-pointer hover:opacity-85' : ''
+                                        ]"
+                                        @click="isChecklistSessionCollapsible(section.key) ? toggleChecklistSession(section.key) : null"
+                                    >
                                         <div class="flex items-center gap-2">
                                             <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
                                             <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
@@ -903,12 +912,12 @@ function completedBy(entry) {
                                             <span v-else>•</span>
                                             <span>{{ section.groupLabel }}</span>
                                         </div>
-                                        <button v-if="isChecklistSessionCollapsible(section.key)" type="button" class="p-1 text-zinc-400 hover:text-zinc-200 transition" @click="toggleChecklistSession(section.key)" aria-label="Kecilkan/besarkan senarai">
+                                        <div v-if="isChecklistSessionCollapsible(section.key)" class="p-1 text-zinc-400 transition-colors duration-200">
                                             <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedChecklistSessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                             </svg>
-                                        </button>
-                                    </h2>
+                                        </div>
+                                    </component>
                                     <div v-show="!collapsedChecklistSessions.has(section.key)" class="space-y-2">
                                         <button
                                             v-for="task in tasksFor(section.key)"
@@ -1039,7 +1048,16 @@ function completedBy(entry) {
 
                                         <div class="mt-4 space-y-6">
                                             <div v-for="section in sections" :key="section.key" v-show="historyFor(section.key).length" class="space-y-2">
-                                                <h3 class="px-1 flex items-center justify-between text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
+                                                <component
+                                                    :is="isHistorySessionCollapsible(section.key) ? 'button' : 'h3'"
+                                                    :type="isHistorySessionCollapsible(section.key) ? 'button' : undefined"
+                                                    class="w-full px-1 flex items-center justify-between text-base font-black uppercase tracking-wider text-left transition duration-200 outline-none"
+                                                    :class="[
+                                                        sessionTextClass(section.key),
+                                                        isHistorySessionCollapsible(section.key) ? 'cursor-pointer hover:opacity-85' : ''
+                                                    ]"
+                                                    @click="isHistorySessionCollapsible(section.key) ? toggleHistorySession(section.key) : null"
+                                                >
                                                     <div class="flex items-center gap-2">
                                                         <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
                                                         <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
@@ -1047,12 +1065,12 @@ function completedBy(entry) {
                                                         <span v-else>•</span>
                                                         <span>{{ section.groupLabel }}</span>
                                                     </div>
-                                                    <button v-if="isHistorySessionCollapsible(section.key)" type="button" class="p-1 text-zinc-400 hover:text-zinc-200 transition" @click="toggleHistorySession(section.key)" aria-label="Kecilkan/besarkan senarai">
+                                                    <div v-if="isHistorySessionCollapsible(section.key)" class="p-1 text-zinc-400 transition-colors duration-200">
                                                         <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedHistorySessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                                         </svg>
-                                                    </button>
-                                                </h3>
+                                                    </div>
+                                                </component>
                                                 <div v-show="!collapsedHistorySessions.has(section.key)" class="space-y-2">
                                                     <article v-for="entry in historyFor(section.key)" :key="entry.id" class="rounded-xl border border-zinc-700/80 bg-[#121212] px-3 py-3">
                                                         <div class="flex items-start justify-between gap-3">

@@ -750,8 +750,8 @@ function completedBy(entry) {
 </script>
 
 <template>
-    <div class="min-h-screen bg-zinc-950 p-0 font-sans text-zinc-100 antialiased sm:p-4">
-        <main class="relative mx-auto flex min-h-screen w-full max-w-md flex-col overflow-hidden bg-[#121212] sm:min-h-[840px] sm:max-h-[900px] sm:rounded-[36px] sm:border sm:border-zinc-700 sm:shadow-[0_24px_64px_rgba(0,0,0,0.8)]">
+    <div class="min-h-screen bg-[#121212] p-0 font-sans text-zinc-100 antialiased flex flex-col">
+        <main class="relative flex flex-1 flex-col w-full overflow-x-hidden">
 
             <div v-if="actionError" class="absolute inset-x-4 top-5 z-[60]" aria-live="polite">
                 <p
@@ -761,23 +761,25 @@ function completedBy(entry) {
                 </p>
             </div>
 
-            <section v-if="screen === 'welcome'" class="flex flex-1 flex-col justify-between px-6 py-12 text-center">
-                <div class="flex flex-1 flex-col items-center justify-center space-y-6">
+            <section v-if="screen === 'welcome'" class="flex flex-1 flex-col justify-center px-6 py-12 text-center md:flex-row md:items-center md:justify-center md:gap-16 md:px-12 max-w-4xl mx-auto w-full my-auto min-h-[80vh]">
+                <!-- Branding column -->
+                <div class="flex flex-1 flex-col items-center justify-center space-y-6 md:items-start md:justify-center md:text-left">
                     <div class="w-20 rounded-2xl bg-gradient-to-tr from-[#ED4264] to-[#FFEDBC] p-0.5 shadow-lg shadow-[#ED4264]/20">
                         <div class="flex aspect-square items-center justify-center rounded-2xl bg-[#121212]">
                             <svg class="h-10 w-10 text-zinc-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4" />
                             </svg>
                         </div>
                     </div>
 
                     <div class="space-y-2">
-                        <h1 class="bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">FF SPOTLESS</h1>
-                        <p class="mx-auto max-w-xs text-sm text-zinc-400">FF Studios Cleaner Checklist</p>
+                        <h1 class="bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] bg-clip-text text-4xl md:text-5xl font-extrabold tracking-tight text-transparent">FF SPOTLESS</h1>
+                        <p class="mx-auto md:mx-0 max-w-xs text-sm md:text-base text-zinc-400">FF Studios Cleaner Checklist</p>
                     </div>
                 </div>
 
-                <div class="space-y-4">
+                <!-- Actions column -->
+                <div class="space-y-4 w-full md:max-w-sm mt-8 md:mt-0">
                     <button
                         type="button"
                         :disabled="isOpeningChecklist"
@@ -803,7 +805,7 @@ function completedBy(entry) {
                 </div>
             </section>
 
-            <section v-else-if="screen === 'admin-login'" class="flex flex-1 flex-col justify-between px-6 py-12">
+            <section v-else-if="screen === 'admin-login'" class="flex flex-1 flex-col justify-center px-6 py-12 max-w-md mx-auto w-full my-auto min-h-[60vh]">
                 <button type="button" class="inline-flex w-fit items-center gap-2 p-2 -ml-2 text-sm font-medium text-zinc-400 transition hover:text-zinc-200" @click="screen = 'welcome'; adminLoginError = ''">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
                     Kembali
@@ -829,7 +831,7 @@ function completedBy(entry) {
                 </form>
             </section>
 
-            <section v-else-if="screen === 'checklist'" class="flex min-h-0 flex-1 flex-col">
+            <section v-else-if="screen === 'checklist'" class="flex min-h-0 flex-1 flex-col max-w-6xl mx-auto w-full py-4 md:py-8">
                 <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md">
                     <div class="min-w-0">
                         <p class="text-xs font-semibold tracking-wide text-zinc-500">FF SPOTLESS</p>
@@ -942,206 +944,266 @@ function completedBy(entry) {
                 </main>
             </section>
 
-            <section v-else-if="screen === 'admin'" class="flex min-h-0 flex-1 flex-col">
-                <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md">
-                    <div>
-                        <p class="text-xs font-semibold tracking-wide text-[#FFB0BE]">FF SPOTLESS</p>
-                        <h1 class="text-base font-bold text-zinc-100">Admin Dashboard</h1>
+            <section v-else-if="screen === 'admin'" class="flex min-h-0 flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full md:py-6 md:px-4 gap-6">
+                <!-- Sidebar (Desktop only) -->
+                <aside class="hidden md:flex md:w-64 md:flex-col md:border-r md:border-zinc-800 md:bg-[#121212]/50 md:p-6 md:shrink-0 md:justify-between">
+                    <div class="space-y-6">
+                        <div class="px-2">
+                            <p class="text-xs font-semibold tracking-wide text-[#FFB0BE] uppercase">FF SPOTLESS</p>
+                            <h1 class="text-lg font-extrabold text-zinc-100">Admin Dashboard</h1>
+                        </div>
+                        <nav class="space-y-1">
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
+                                :class="adminActiveTab === 'history' ? 'bg-[#ED4264]/10 text-[#FFB0BE] border border-[#ED4264]/20' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white border border-transparent'"
+                                @click="adminActiveTab = 'history'"
+                            >
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+                                </svg>
+                                <span>Rekod Sejarah</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
+                                :class="adminActiveTab === 'templates' ? 'bg-[#ED4264]/10 text-[#FFB0BE] border border-[#ED4264]/20' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white border border-transparent'"
+                                @click="adminActiveTab = 'templates'"
+                            >
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                </svg>
+                                <span>Urus Tugasan</span>
+                            </button>
+                        </nav>
                     </div>
-                    <div class="relative">
+                    <div class="px-2 pb-4">
                         <button
                             type="button"
-                            class="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:bg-zinc-800"
-                            :aria-expanded="showAdminMenu"
-                            aria-label="Menu Pentadbir"
-                            @click="showAdminMenu = !showAdminMenu"
+                            class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-rose-400 transition hover:bg-red-500/10 hover:text-rose-300"
+                            @click="logoutAdmin"
                         >
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
+                            <span>Log keluar</span>
                         </button>
-
-                        <Transition
-                            enter-active-class="transition duration-100 ease-out"
-                            enter-from-class="transform scale-95 opacity-0"
-                            enter-to-class="transform scale-100 opacity-100"
-                            leave-active-class="transition duration-75 ease-in"
-                            leave-from-class="transform scale-100 opacity-100"
-                            leave-to-class="transform scale-95 opacity-0"
-                        >
-                            <div v-if="showAdminMenu" class="absolute right-0 top-11 z-30 w-48 origin-top-right rounded-2xl border border-zinc-600 bg-zinc-900 p-2 shadow-2xl">
-                                <button
-                                    type="button"
-                                    class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
-                                    :class="adminActiveTab === 'history' ? 'bg-[#ED4264]/10 text-[#FFB0BE]' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'"
-                                    @click="adminActiveTab = 'history'; showAdminMenu = false"
-                                >
-                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
-                                    </svg>
-                                    <span>Rekod Sejarah</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
-                                    :class="adminActiveTab === 'templates' ? 'bg-[#ED4264]/10 text-[#FFB0BE]' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'"
-                                    @click="adminActiveTab = 'templates'; showAdminMenu = false"
-                                >
-                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                    </svg>
-                                    <span>Urus Tugasan</span>
-                                </button>
-                                <div class="my-1 border-t border-zinc-800"></div>
-                                <button
-                                    type="button"
-                                    class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-bold text-rose-400 transition hover:bg-red-500/10 hover:text-rose-300"
-                                    @click="logoutAdmin(); showAdminMenu = false"
-                                >
-                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                    <span>Log keluar</span>
-                                </button>
-                            </div>
-                        </Transition>
                     </div>
-                </header>
+                </aside>
 
-                <main class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-                    <div v-if="adminActiveTab === 'history'" class="mb-7 space-y-4">
-                        <!-- Date Header Wrapper -->
-                        <div class="relative rounded-2xl border border-zinc-700 bg-zinc-900/45 px-4 pb-10 pt-2.5">
-                            <div class="flex items-center justify-between gap-3">
-                                <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian sebelumnya" @click="adjustAdminDate(-1)">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
-                                </button>
-                                <div class="min-w-0 text-center">
-                                    <h2 class="truncate text-xs font-semibold tracking-wide text-zinc-500 uppercase">History</h2>
-                                    <div class="h-5 flex items-center justify-center mt-0.5">
-                                        <Transition :name="slideDirection" mode="out-in">
-                                            <p :key="adminDate" class="truncate text-sm font-bold text-zinc-200 transition-colors duration-300" :class="isAdminDateToday ? 'text-[#ED4264] font-semibold' : 'text-zinc-200'">{{ displayAdminDate }}</p>
-                                        </Transition>
-                                    </div>
-                                </div>
-                                <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian berikutnya" @click="adjustAdminDate(1)">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
-                                </button>
-                            </div>
-                            <button v-if="!isAdminDateToday" type="button" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-950 shadow-md shadow-rose-950/20 transition hover:brightness-110 active:scale-95 animate-button-glow" @click="resetAdminDate">Ke hari ini</button>
+                <!-- Right Pane -->
+                <div class="flex flex-1 flex-col min-h-0 bg-[#121212]">
+                    <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md md:px-8">
+                        <div>
+                            <p class="text-xs font-semibold tracking-wide text-[#FFB0BE] md:hidden">FF SPOTLESS</p>
+                            <h1 class="text-base font-bold text-zinc-100 md:hidden">Admin Dashboard</h1>
+                            <h1 class="hidden md:block text-lg font-bold text-zinc-100">
+                                {{ adminActiveTab === 'history' ? 'Rekod Sejarah Penyelesaian' : 'Urus Templat Tugasan' }}
+                            </h1>
                         </div>
+                        <div class="relative md:hidden">
+                            <button
+                                type="button"
+                                class="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:bg-zinc-800"
+                                :aria-expanded="showAdminMenu"
+                                aria-label="Menu Pentadbir"
+                                @click="showAdminMenu = !showAdminMenu"
+                            >
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
 
-                        <!-- History Content Card -->
-                        <div class="rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4">
-                            <Transition :name="slideDirection" mode="out-in">
-                                <div :key="adminDate" class="space-y-4">
-                                    <div v-if="completedEntries.length">
-                                        <div class="border-b border-zinc-800 pb-4">
-                                            <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
-                                                <div class="h-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] transition-all duration-500" :style="{ width: `${adminProgressPercentage}%` }"></div>
+                            <Transition
+                                enter-active-class="transition duration-100 ease-out"
+                                enter-from-class="transform scale-95 opacity-0"
+                                enter-to-class="transform scale-100 opacity-100"
+                                leave-active-class="transition duration-75 ease-in"
+                                leave-from-class="transform scale-100 opacity-100"
+                                leave-to-class="transform scale-95 opacity-0"
+                            >
+                                <div v-if="showAdminMenu" class="absolute right-0 top-11 z-30 w-48 origin-top-right rounded-2xl border border-zinc-600 bg-zinc-900 p-2 shadow-2xl">
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
+                                        :class="adminActiveTab === 'history' ? 'bg-[#ED4264]/10 text-[#FFB0BE]' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'"
+                                        @click="adminActiveTab = 'history'; showAdminMenu = false"
+                                    >
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+                                        </svg>
+                                        <span>Rekod Sejarah</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
+                                        :class="adminActiveTab === 'templates' ? 'bg-[#ED4264]/10 text-[#FFB0BE]' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'"
+                                        @click="adminActiveTab = 'templates'; showAdminMenu = false"
+                                    >
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                        </svg>
+                                        <span>Urus Tugasan</span>
+                                    </button>
+                                    <div class="my-1 border-t border-zinc-800"></div>
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-bold text-rose-400 transition hover:bg-red-500/10 hover:text-rose-300"
+                                        @click="logoutAdmin(); showAdminMenu = false"
+                                    >
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                        </svg>
+                                        <span>Log keluar</span>
+                                    </button>
+                                </div>
+                            </Transition>
+                        </div>
+                    </header>
+
+                    <main class="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-6 bg-[#121212]">
+                        <div v-if="adminActiveTab === 'history'" class="mb-7 space-y-4">
+                            <!-- Date Header Wrapper -->
+                            <div class="relative rounded-2xl border border-zinc-700 bg-zinc-900/45 px-4 pb-10 pt-2.5">
+                                <div class="flex items-center justify-between gap-3 md:justify-center md:gap-8">
+                                    <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian sebelumnya" @click="adjustAdminDate(-1)">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
+                                    </button>
+                                    <div class="min-w-0 text-center">
+                                        <h2 class="truncate text-xs font-semibold tracking-wide text-zinc-500 uppercase">Sejarah</h2>
+                                        <div class="h-5 flex items-center justify-center mt-0.5">
+                                            <Transition :name="slideDirection" mode="out-in">
+                                                <p :key="adminDate" class="truncate text-sm font-bold text-zinc-200 transition-colors duration-300" :class="isAdminDateToday ? 'text-[#ED4264] font-semibold' : 'text-zinc-200'">{{ displayAdminDate }}</p>
+                                            </Transition>
+                                        </div>
+                                    </div>
+                                    <button type="button" :disabled="isNavigating" class="rounded-lg border border-zinc-700 bg-[#121212] p-2.5 text-zinc-400 disabled:opacity-50" aria-label="Tarikh penyelesaian berikutnya" @click="adjustAdminDate(1)">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
+                                    </button>
+                                </div>
+                                <button v-if="!isAdminDateToday" type="button" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] px-4 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-950 shadow-md shadow-rose-950/20 transition hover:brightness-110 active:scale-95 animate-button-glow md:static md:translate-x-0 md:mt-3 md:mx-auto md:block md:w-fit" @click="resetAdminDate">Ke hari ini</button>
+                            </div>
+
+                            <!-- History Content Card -->
+                            <div class="rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4 md:p-6">
+                                <Transition :name="slideDirection" mode="out-in">
+                                    <div :key="adminDate" class="space-y-4">
+                                        <div v-if="completedEntries.length">
+                                            <div class="border-b border-zinc-800 pb-4">
+                                                <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+                                                    <div class="h-full bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] transition-all duration-500" :style="{ width: `${adminProgressPercentage}%` }"></div>
+                                                </div>
+                                                <div class="mt-2 flex items-center justify-between text-xs text-zinc-400">
+                                                    <span>{{ adminCompletedCount }} daripada {{ completedEntries.length }} selesai</span>
+                                                    <span class="font-semibold text-zinc-300">{{ adminProgressPercentage }}%</span>
+                                                </div>
                                             </div>
-                                            <div class="mt-2 flex items-center justify-between text-xs text-zinc-400">
-                                                <span>{{ adminCompletedCount }} daripada {{ completedEntries.length }} selesai</span>
-                                                <span class="font-semibold text-zinc-300">{{ adminProgressPercentage }}%</span>
+
+                                            <div class="mt-4 space-y-6 md:space-y-0 md:grid md:grid-cols-3 md:gap-6 md:items-start">
+                                                <div v-for="section in sections" :key="section.key" v-show="historyFor(section.key).length" class="space-y-2 md:bg-zinc-900/30 md:p-4 md:rounded-xl md:border md:border-zinc-800/80 md:min-h-[250px]">
+                                                    <component
+                                                        :is="isHistorySessionCollapsible(section.key) ? 'button' : 'h3'"
+                                                        :type="isHistorySessionCollapsible(section.key) ? 'button' : undefined"
+                                                        class="w-full px-1 flex items-center justify-between text-base font-black uppercase tracking-wider text-left transition duration-200 outline-none"
+                                                        :class="[
+                                                            sessionTextClass(section.key),
+                                                            isHistorySessionCollapsible(section.key) ? 'cursor-pointer hover:opacity-85' : ''
+                                                        ]"
+                                                        @click="isHistorySessionCollapsible(section.key) ? toggleHistorySession(section.key) : null"
+                                                    >
+                                                        <div class="flex items-center gap-2">
+                                                            <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                                                            <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                                                            <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                                            <span v-else>•</span>
+                                                            <span>{{ section.groupLabel }}</span>
+                                                        </div>
+                                                        <div v-if="isHistorySessionCollapsible(section.key)" class="p-1 text-zinc-400 transition-colors duration-200">
+                                                            <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedHistorySessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </div>
+                                                    </component>
+                                                    <div v-show="!collapsedHistorySessions.has(section.key)" class="space-y-2">
+                                                        <article v-for="entry in historyFor(section.key)" :key="entry.id" class="rounded-xl border border-zinc-700/80 bg-[#121212] px-3 py-3">
+                                                            <div class="flex items-start justify-between gap-3">
+                                                                <p class="min-w-0 text-sm font-semibold leading-snug text-[#ededec]" :class="entry.isCompleted ? '' : 'opacity-70'">{{ completedTaskText(entry) }}</p>
+                                                                <span class="shrink-0 rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" :class="entry.isCompleted ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-zinc-600 bg-zinc-800 text-zinc-400'">
+                                                                    {{ entry.isCompleted ? 'Selesai' : 'Belum Selesai' }}
+                                                                </span>
+                                                            </div>
+                                                            <div v-if="entry.isCompleted" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
+                                                                <span>{{ formatCompletedAt(entry.completedAt ?? entry.completed_at) }}</span>
+                                                                <span>{{ completedBy(entry) }}</span>
+                                                            </div>
+                                                        </article>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
+                                        <div v-else>
+                                            <p class="rounded-xl border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-500">Tiada rekod tugasan untuk tarikh ini.</p>
+                                        </div>
+                                    </div>
+                                </Transition>
+                            </div>
+                            <p v-if="completedPagination?.total !== undefined && completedEntries.length" class="mt-3 text-center text-[11px] text-zinc-600">{{ completedPagination.total }} tugasan selesai direkodkan.</p>
+                        </div>
 
-                                        <div class="mt-4 space-y-6">
-                                            <div v-for="section in sections" :key="section.key" v-show="historyFor(section.key).length" class="space-y-2">
-                                                <component
-                                                    :is="isHistorySessionCollapsible(section.key) ? 'button' : 'h3'"
-                                                    :type="isHistorySessionCollapsible(section.key) ? 'button' : undefined"
-                                                    class="w-full px-1 flex items-center justify-between text-base font-black uppercase tracking-wider text-left transition duration-200 outline-none"
-                                                    :class="[
-                                                        sessionTextClass(section.key),
-                                                        isHistorySessionCollapsible(section.key) ? 'cursor-pointer hover:opacity-85' : ''
-                                                    ]"
-                                                    @click="isHistorySessionCollapsible(section.key) ? toggleHistorySession(section.key) : null"
-                                                >
-                                                    <div class="flex items-center gap-2">
-                                                        <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                                                        <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-                                                        <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                                                        <span v-else>•</span>
-                                                        <span>{{ section.groupLabel }}</span>
-                                                    </div>
-                                                    <div v-if="isHistorySessionCollapsible(section.key)" class="p-1 text-zinc-400 transition-colors duration-200">
-                                                        <svg class="h-4 w-4 transition-transform duration-200" :class="collapsedHistorySessions.has(section.key) ? '-rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        <section v-else-if="adminActiveTab === 'templates'" class="mb-7 rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4 md:p-6">
+                            <div class="md:grid md:grid-cols-12 md:gap-8 md:items-start">
+                                <!-- Left: Form to Add Template -->
+                                <div class="md:col-span-5 space-y-4">
+                                    <div class="mb-2">
+                                        <h2 class="text-sm md:text-base font-bold text-zinc-200">Tambah Templat</h2>
+                                        <p class="mt-1 text-xs leading-relaxed text-zinc-500">Template baharu ditambah pada senarai hari ini dan akan datang; rekod lampau kekal tidak berubah.</p>
+                                    </div>
+
+                                    <form class="space-y-3 bg-[#121212]/50 p-4 rounded-xl border border-zinc-800/80" @submit.prevent="createTemplate">
+                                        <label class="block">
+                                            <span class="mb-1.5 block text-xs font-semibold text-zinc-500">Nama tugasan</span>
+                                            <input v-model.trim="templateForm.task_name" maxlength="255" required class="h-11 w-full rounded-xl border border-zinc-700 bg-[#121212] px-3 text-sm text-zinc-100 outline-none transition focus:border-[#ED4264]" placeholder="cth. Nyahkuman pemegang pintu masuk">
+                                        </label>
+                                        <label class="block">
+                                            <span class="mb-1.5 block text-xs font-semibold text-zinc-500">Sesi</span>
+                                            <select v-model="templateForm.session" class="h-11 w-full rounded-xl border border-zinc-700 bg-[#121212] px-3 text-sm text-zinc-100 outline-none transition focus:border-[#ED4264]">
+                                                <option v-for="section in sections" :key="section.key" :value="section.key">{{ section.label }}</option>
+                                            </select>
+                                        </label>
+                                        <button type="submit" :disabled="isCreatingTemplate" class="h-11 w-full rounded-xl bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] text-sm font-bold text-zinc-950 transition active:scale-[0.98] disabled:opacity-50">{{ isCreatingTemplate ? 'Menambah…' : 'Tambah tugasan' }}</button>
+                                    </form>
+                                </div>
+
+                                <!-- Right: Template List -->
+                                <div class="md:col-span-7 mt-6 md:mt-0">
+                                    <h2 class="text-sm md:text-base font-bold text-zinc-200 mb-4 pb-2 border-b border-zinc-800">Senarai Templat Sedia Ada</h2>
+                                    <div v-if="templates.length" class="space-y-6">
+                                        <div v-for="section in sections" :key="section.key" v-show="templatesFor(section.key).length" class="space-y-2">
+                                            <h3 class="px-1 flex items-center gap-2 text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
+                                                <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                                                <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                                                <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                                <span v-else>•</span>
+                                                <span>{{ section.groupLabel }}</span>
+                                            </h3>
+                                            <div class="space-y-2">
+                                                <div v-for="template in templatesFor(section.key)" :key="template.id" class="flex items-start justify-between gap-3 rounded-xl bg-[#121212] px-3 py-2.5">
+                                                    <span class="min-w-0 flex-1 text-sm leading-snug text-zinc-300">{{ template.taskName ?? template.task_name ?? template.text }}</span>
+                                                    <button type="button" class="rounded-lg border border-zinc-600 p-1.5 text-zinc-300 transition hover:bg-zinc-700 hover:text-white" :aria-label="`Sunting ${template.taskName ?? template.task_name ?? template.text}`" @click="openTemplateEditor(template)">
+                                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                         </svg>
-                                                    </div>
-                                                </component>
-                                                <div v-show="!collapsedHistorySessions.has(section.key)" class="space-y-2">
-                                                    <article v-for="entry in historyFor(section.key)" :key="entry.id" class="rounded-xl border border-zinc-700/80 bg-[#121212] px-3 py-3">
-                                                        <div class="flex items-start justify-between gap-3">
-                                                            <p class="min-w-0 text-sm font-semibold leading-snug text-[#ededec]" :class="entry.isCompleted ? '' : 'opacity-70'">{{ completedTaskText(entry) }}</p>
-                                                            <span class="shrink-0 rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" :class="entry.isCompleted ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-zinc-600 bg-zinc-800 text-zinc-400'">
-                                                                {{ entry.isCompleted ? 'Selesai' : 'Belum Selesai' }}
-                                                            </span>
-                                                        </div>
-                                                        <div v-if="entry.isCompleted" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
-                                                            <span>{{ formatCompletedAt(entry.completedAt ?? entry.completed_at) }}</span>
-                                                            <span>{{ completedBy(entry) }}</span>
-                                                        </div>
-                                                    </article>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div v-else>
-                                        <p class="rounded-xl border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-500">Tiada rekod tugasan untuk tarikh ini.</p>
-                                    </div>
-                                </div>
-                            </Transition>
-                        </div>
-                        <p v-if="completedPagination?.total !== undefined && completedEntries.length" class="mt-3 text-center text-[11px] text-zinc-600">{{ completedPagination.total }} tugasan selesai direkodkan.</p>
-                    </div>
-
-                    <section v-else-if="adminActiveTab === 'templates'" class="mb-7 rounded-2xl border border-zinc-700 bg-zinc-900/45 p-4">
-                        <div class="mb-4">
-                            <h2 class="text-sm font-bold text-zinc-200">Tugasan</h2>
-                            <p class="mt-1 text-xs leading-relaxed text-zinc-500">Template baharu ditambah pada senarai hari ini dan akan datang; rekod lampau kekal tidak berubah.</p>
-                        </div>
-
-                        <form class="space-y-3" @submit.prevent="createTemplate">
-                            <label class="block">
-                                <span class="mb-1.5 block text-xs font-semibold text-zinc-500">Nama tugasan</span>
-                                <input v-model.trim="templateForm.task_name" maxlength="255" required class="h-11 w-full rounded-xl border border-zinc-700 bg-[#121212] px-3 text-sm text-zinc-100 outline-none transition focus:border-[#ED4264]" placeholder="cth. Nyahkuman pemegang pintu masuk">
-                            </label>
-                            <label class="block">
-                                <span class="mb-1.5 block text-xs font-semibold text-zinc-500">Sesi</span>
-                                <select v-model="templateForm.session" class="h-11 w-full rounded-xl border border-zinc-700 bg-[#121212] px-3 text-sm text-zinc-100 outline-none transition focus:border-[#ED4264]">
-                                    <option v-for="section in sections" :key="section.key" :value="section.key">{{ section.label }}</option>
-                                </select>
-                            </label>
-                            <button type="submit" :disabled="isCreatingTemplate" class="h-11 w-full rounded-xl bg-gradient-to-r from-[#ED4264] to-[#FFEDBC] text-sm font-bold text-zinc-950 transition active:scale-[0.98] disabled:opacity-50">{{ isCreatingTemplate ? 'Menambah…' : 'Tambah tugasan' }}</button>
-                        </form>
-
-                        <div v-if="templates.length" class="mt-5 space-y-6 border-t border-zinc-700 pt-4">
-                            <div v-for="section in sections" :key="section.key" v-show="templatesFor(section.key).length" class="space-y-2">
-                                <h3 class="px-1 flex items-center gap-2 text-base font-black uppercase tracking-wider" :class="sessionTextClass(section.key)">
-                                    <svg v-if="section.key === 'morning'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                                    <svg v-else-if="section.key === 'afternoon'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-                                    <svg v-else-if="section.key === 'evening'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                                    <span v-else>•</span>
-                                    <span>{{ section.groupLabel }}</span>
-                                </h3>
-                                <div class="space-y-2">
-                                    <div v-for="template in templatesFor(section.key)" :key="template.id" class="flex items-start justify-between gap-3 rounded-xl bg-[#121212] px-3 py-2.5">
-                                        <span class="min-w-0 flex-1 text-sm leading-snug text-zinc-300">{{ template.taskName ?? template.task_name ?? template.text }}</span>
-                                        <button type="button" class="rounded-lg border border-zinc-600 p-1.5 text-zinc-300 transition hover:bg-zinc-700 hover:text-white" :aria-label="`Sunting ${template.taskName ?? template.task_name ?? template.text}`" @click="openTemplateEditor(template)">
-                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
-                                        </button>
-                                    </div>
+                                    <p v-else class="mt-5 rounded-xl border border-dashed border-zinc-700 px-3 py-4 text-center text-xs text-zinc-500">Tiada templat lagi.</p>
                                 </div>
                             </div>
-                        </div>
-                        <p v-else class="mt-5 rounded-xl border border-dashed border-zinc-700 px-3 py-4 text-center text-xs text-zinc-500">Tiada templat lagi.</p>
-                    </section>
-
-                </main>
+                        </section>
+                    </main>
+                </div>
 
                 <div
                     v-if="editingTemplate"
@@ -1150,7 +1212,7 @@ function completedBy(entry) {
                     aria-modal="true"
                     aria-labelledby="template-editor-title"
                 >
-                    <form class="w-full rounded-2xl border border-zinc-600 bg-[#171717] p-5 shadow-2xl" @submit.prevent="updateTemplate">
+                    <form class="w-full max-w-md mx-auto rounded-2xl border border-zinc-600 bg-[#171717] p-5 shadow-2xl" @submit.prevent="updateTemplate">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h2 id="template-editor-title" class="text-base font-bold text-zinc-100">Edit tugasan</h2>
@@ -1242,7 +1304,6 @@ function completedBy(entry) {
                         </template>
                     </form>
                 </div>
-
             </section>
         </main>
     </div>

@@ -17,4 +17,18 @@
     textarea {
         font-family: var(--font-sans);
     }
+
+    html {
+        touch-action: manipulation;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea,
+    [role='button'] {
+        touch-action: manipulation;
+    }
 }

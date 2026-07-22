@@ -81,6 +81,7 @@ const showChecklistCalendar = ref(false);
 const showAdminCalendar = ref(false);
 const checklistCalendarMonth = ref('');
 const adminCalendarMonth = ref('');
+const theme = ref(resolveInitialTheme());
 let notificationTimer;
 
 const adminLogin = reactive({ password: '' });
@@ -97,6 +98,9 @@ const isDeletingTemplate = ref(false);
 const isConfirmingTemplateDeletion = ref(false);
 
 const isAdmin = computed(() => Boolean(props.auth?.isAdmin));
+const isLightMode = computed(() => theme.value === 'light');
+const themeClass = computed(() => (isLightMode.value ? 'theme-light' : 'theme-dark'));
+const themeToggleLabel = computed(() => (isLightMode.value ? 'Tukar ke mod gelap' : 'Tukar ke mod cerah'));
 const templates = computed(() => collectionItems(props.templates));
 const completedEntries = computed(() => collectionItems(props.completedTasks));
 const completedPagination = computed(() => {
@@ -265,6 +269,21 @@ watch(
     { immediate: true },
 );
 
+watch(
+    theme,
+    (value) => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.localStorage.setItem('ff-spotless-theme', value);
+        document.documentElement.dataset.theme = value;
+        document.documentElement.style.colorScheme = value;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', value === 'light' ? '#f8fafc' : '#121212');
+    },
+    { immediate: true },
+);
+
 function resolveInitialScreen() {
     if (['welcome', 'checklist', 'admin'].includes(props.mode)) {
         return props.mode;
@@ -275,6 +294,24 @@ function resolveInitialScreen() {
     }
 
     return 'welcome';
+}
+
+function resolveInitialTheme() {
+    if (typeof window === 'undefined') {
+        return 'dark';
+    }
+
+    const storedTheme = window.localStorage.getItem('ff-spotless-theme');
+
+    if (['light', 'dark'].includes(storedTheme)) {
+        return storedTheme;
+    }
+
+    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function toggleTheme() {
+    theme.value = isLightMode.value ? 'dark' : 'light';
 }
 
 function collectionItems(value) {
@@ -933,7 +970,7 @@ function completedBy(entry) {
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#121212] p-0 font-sans text-zinc-100 antialiased flex flex-col">
+    <div class="min-h-screen bg-[#121212] p-0 font-sans text-zinc-100 antialiased flex flex-col theme-shell" :class="themeClass">
         <main class="relative flex flex-1 flex-col w-full overflow-x-hidden">
 
             <div v-if="actionError" class="absolute inset-x-4 top-5 z-[60]" aria-live="polite">
@@ -1021,6 +1058,20 @@ function completedBy(entry) {
                         <p class="truncate text-sm font-semibold text-zinc-200">Hello, Kak Jihan!</p>
                     </div>
                     <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            class="theme-toggle-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                            :aria-label="themeToggleLabel"
+                            :title="themeToggleLabel"
+                            @click="toggleTheme"
+                        >
+                            <svg v-if="isLightMode" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75 9.75 9.75 0 0 1 8.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25 9.75 9.75 0 0 0 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                            </svg>
+                            <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                            </svg>
+                        </button>
                         <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold" :class="syncState === 'saving' ? 'border-amber-500/25 bg-amber-500/10 text-amber-300' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400'">
                             <span class="h-1.5 w-1.5 rounded-full" :class="syncState === 'saving' ? 'animate-pulse bg-amber-300' : 'bg-emerald-400'"></span>
                             {{ syncState === 'saving' ? 'Menyimpan' : 'Status: OK' }}
@@ -1212,7 +1263,21 @@ function completedBy(entry) {
                             </button>
                         </nav>
                     </div>
-                    <div class="px-2 pb-4">
+                    <div class="space-y-2 px-2 pb-4">
+                        <button
+                            type="button"
+                            class="theme-toggle-button flex w-full items-center gap-2.5 rounded-xl border border-zinc-700 px-3 py-2.5 text-left text-sm font-bold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                            :aria-label="themeToggleLabel"
+                            @click="toggleTheme"
+                        >
+                            <svg v-if="isLightMode" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75 9.75 9.75 0 0 1 8.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25 9.75 9.75 0 0 0 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                            </svg>
+                            <svg v-else class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                            </svg>
+                            <span>{{ isLightMode ? 'Mod gelap' : 'Mod cerah' }}</span>
+                        </button>
                         <button
                             type="button"
                             class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-rose-400 transition hover:bg-red-500/10 hover:text-rose-300"
@@ -1236,28 +1301,43 @@ function completedBy(entry) {
                                 {{ adminActiveTab === 'history' ? 'Rekod Sejarah Penyelesaian' : 'Urus Templat Tugasan' }}
                             </h1>
                         </div>
-                        <div class="relative md:hidden">
+                        <div class="flex items-center gap-2 md:hidden">
                             <button
                                 type="button"
-                                class="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:bg-zinc-800"
-                                :aria-expanded="showAdminMenu"
-                                aria-label="Menu Pentadbir"
-                                @click="showAdminMenu = !showAdminMenu"
+                                class="theme-toggle-button flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                                :aria-label="themeToggleLabel"
+                                :title="themeToggleLabel"
+                                @click="toggleTheme"
                             >
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                <svg v-if="isLightMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75 9.75 9.75 0 0 1 8.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25 9.75 9.75 0 0 0 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                                </svg>
+                                <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
                                 </svg>
                             </button>
+                            <div class="relative">
+                                <button
+                                    type="button"
+                                    class="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:bg-zinc-800"
+                                    :aria-expanded="showAdminMenu"
+                                    aria-label="Menu Pentadbir"
+                                    @click="showAdminMenu = !showAdminMenu"
+                                >
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                </button>
 
-                            <Transition
-                                enter-active-class="transition duration-100 ease-out"
-                                enter-from-class="transform scale-95 opacity-0"
-                                enter-to-class="transform scale-100 opacity-100"
-                                leave-active-class="transition duration-75 ease-in"
-                                leave-from-class="transform scale-100 opacity-100"
-                                leave-to-class="transform scale-95 opacity-0"
-                            >
-                                <div v-if="showAdminMenu" class="absolute right-0 top-11 z-30 w-48 origin-top-right rounded-2xl border border-zinc-600 bg-zinc-900 p-2 shadow-2xl">
+                                <Transition
+                                    enter-active-class="transition duration-100 ease-out"
+                                    enter-from-class="transform scale-95 opacity-0"
+                                    enter-to-class="transform scale-100 opacity-100"
+                                    leave-active-class="transition duration-75 ease-in"
+                                    leave-from-class="transform scale-100 opacity-100"
+                                    leave-to-class="transform scale-95 opacity-0"
+                                >
+                                    <div v-if="showAdminMenu" class="absolute right-0 top-11 z-30 w-48 origin-top-right rounded-2xl border border-zinc-600 bg-zinc-900 p-2 shadow-2xl">
                                     <button
                                         type="button"
                                         class="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-sm font-semibold transition"
@@ -1291,8 +1371,9 @@ function completedBy(entry) {
                                         </svg>
                                         <span>Log keluar</span>
                                     </button>
-                                </div>
-                            </Transition>
+                                    </div>
+                                </Transition>
+                            </div>
                         </div>
                     </header>
 
@@ -1617,6 +1698,108 @@ function completedBy(entry) {
 }
 .animate-button-glow {
     animation: button-glow 2.2s infinite ease-in-out;
+}
+
+.theme-shell,
+.theme-shell :where(button, input, select, textarea, section, header, main, aside, div, article, p, h1, h2, h3, span, svg) {
+    transition-duration: 220ms;
+    transition-property: background-color, border-color, box-shadow, color, opacity, filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-light {
+    background-color: #f8fafc;
+    color: #18181b;
+}
+
+.theme-light :is(input, select, textarea) {
+    color-scheme: light;
+}
+
+.theme-light :is(input, select, textarea)::placeholder {
+    color: #a1a1aa;
+}
+
+.theme-light [class*="bg-[#121212]"],
+.theme-light [class*="bg-[#171717]"],
+.theme-light [class*="bg-zinc-950"] {
+    background-color: #f8fafc;
+}
+
+.theme-light [class*="bg-[#121212]/"],
+.theme-light [class*="bg-zinc-900/"],
+.theme-light [class*="bg-zinc-800/"] {
+    background-color: rgba(255, 255, 255, 0.78);
+}
+
+.theme-light [class~="bg-zinc-900"],
+.theme-light [class~="bg-zinc-800"] {
+    background-color: #ffffff;
+}
+
+.theme-light [class*="hover:bg-zinc-800"]:hover,
+.theme-light [class*="hover:bg-zinc-700"]:hover,
+.theme-light [class*="hover:bg-zinc-900"]:hover {
+    background-color: #f1f5f9;
+}
+
+.theme-light [class*="border-zinc-800"],
+.theme-light [class*="border-zinc-700"],
+.theme-light [class*="border-zinc-600"] {
+    border-color: #d4d4d8;
+}
+
+.theme-light [class*="text-zinc-100"],
+.theme-light [class*="text-zinc-200"],
+.theme-light [class*="text-zinc-300"],
+.theme-light [class*="text-[#ededec]"] {
+    color: #18181b;
+}
+
+.theme-light [class*="text-zinc-400"],
+.theme-light [class*="text-zinc-500"] {
+    color: #71717a;
+}
+
+.theme-light [class*="text-zinc-600"] {
+    color: #a1a1aa;
+}
+
+.theme-light [class*="text-[#FFB0BE]"] {
+    color: #be123c;
+}
+
+.theme-light .safe-area-header {
+    background-color: rgba(248, 250, 252, 0.94);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.theme-light .theme-toggle-button {
+    background-color: #ffffff;
+    border-color: #d4d4d8;
+    color: #3f3f46;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.theme-light .theme-toggle-button:hover {
+    background-color: #f8fafc;
+    color: #18181b;
+}
+
+.theme-light [class*="border-dashed"] {
+    border-color: #cbd5e1;
+}
+
+.theme-light [class*="shadow-black"] {
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+.theme-light [class*="shadow-2xl"] {
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+.theme-light [class*="opacity-70"] {
+    opacity: 0.86;
 }
 
 .slide-next-enter-active,

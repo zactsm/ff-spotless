@@ -55,6 +55,35 @@ The Inertia application registers the Vite-generated service worker and includes
 
 ## Hostinger deployment
 
+Hostinger Git deployment pulls from the `production` branch. Commit and push
+production-ready source changes to that branch before triggering a Hostinger
+deploy.
+
+Hostinger SSH on this hosting plan does not support `npm`. After deploying the
+Laravel source through Git, build the frontend on a developer machine from the
+same commit:
+
+```bash
+npm install
+npm run build
+```
+
+Then upload the complete generated folder through Hostinger File Manager:
+
+```text
+public/build/
+```
+
+Place it at:
+
+```text
+public_html/public/build/
+```
+
+Replace the previous `build` folder as a complete folder. Do not copy only
+individual hashed files, because the Vite manifest, CSS, JavaScript chunks, and
+service worker must all come from the same build.
+
 Keep the Laravel application and secrets outside the web root:
 
 ```text

@@ -1,0 +1,49 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Block sensitive dotfiles, while allowing ACME/SSL checks under .well-known.
+    RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
+
+    # Block direct browser access to Laravel source, runtime, and dependency paths.
+    RewriteRule ^(?:app|bootstrap|config|database|docker|lang|node_modules|resources|routes|storage|tests|vendor)(?:/|$) - [F,L,NC]
+
+    # Block direct browser access to project metadata and build/dev config files.
+    RewriteRule ^(?:AGENTS\.md|Dockerfile|README\.md|artisan|composer\.(?:json|lock)|docker-compose\.yml|package(?:-lock)?\.json|phpunit\.xml|vite\.config\.js)$ - [F,L,NC]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Serve Laravel public assets from /public while keeping clean root URLs.
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+    RewriteRule ^(.+)$ public/$1 [L]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.webmanifest$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>

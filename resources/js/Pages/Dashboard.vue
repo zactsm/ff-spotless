@@ -77,6 +77,10 @@ const actionError = ref('');
 const checklistNavigationError = ref('');
 const showAdminMenu = ref(false);
 const adminActiveTab = ref('history');
+const showChecklistCalendar = ref(false);
+const showAdminCalendar = ref(false);
+const checklistCalendarMonth = ref('');
+const adminCalendarMonth = ref('');
 let notificationTimer;
 
 const adminLogin = reactive({ password: '' });
@@ -105,6 +109,11 @@ const completedPagination = computed(() => {
 
 const displayDate = computed(() => formatChecklistDate(selectedDate.value));
 const displayAdminDate = computed(() => formatChecklistDate(adminDate.value));
+const calendarWeekdays = ['Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab', 'Aha'];
+const checklistCalendarMonthLabel = computed(() => formatCalendarMonth(checklistCalendarMonth.value));
+const adminCalendarMonthLabel = computed(() => formatCalendarMonth(adminCalendarMonth.value));
+const checklistCalendarDays = computed(() => calendarDaysForMonth(checklistCalendarMonth.value, selectedDate.value));
+const adminCalendarDays = computed(() => calendarDaysForMonth(adminCalendarMonth.value, adminDate.value));
 const isAdminDateToday = computed(() => {
     const today = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Kuala_Lumpur',
@@ -221,11 +230,19 @@ watch(selectedDate, () => {
         }
     });
     collapsedChecklistSessions.value = new Set(collapsedChecklistSessions.value);
+
+    if (!showChecklistCalendar.value) {
+        checklistCalendarMonth.value = monthFromDate(selectedDate.value);
+    }
 });
 
 watch(adminDate, () => {
     collapsedHistorySessions.value.clear();
     collapsedHistorySessions.value = new Set(collapsedHistorySessions.value);
+
+    if (!showAdminCalendar.value) {
+        adminCalendarMonth.value = monthFromDate(adminDate.value);
+    }
 });
 
 watch(
@@ -383,6 +400,135 @@ function dateWithOffset(value, days) {
     return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
 }
 
+function getTodayDate() {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+}
+
+function monthFromDate(value) {
+    if (!isDateInput(value)) {
+        return getTodayDate().slice(0, 7);
+    }
+
+    return value.slice(0, 7);
+}
+
+function isMonthInput(value) {
+    return /^\d{4}-\d{2}$/.test(value ?? '');
+}
+
+function monthWithOffset(value, offset) {
+    if (!isMonthInput(value)) {
+        return monthFromDate(getTodayDate());
+    }
+
+    const [year, month] = value.split('-').map(Number);
+    const date = new Date(year, month - 1 + offset, 1, 12);
+
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0')].join('-');
+}
+
+function formatCalendarMonth(value) {
+    if (!isMonthInput(value)) {
+        return '';
+    }
+
+    const [year, month] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, 1, 12));
+
+    return new Intl.DateTimeFormat('ms-MY', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Kuala_Lumpur',
+    }).format(date);
+}
+
+function calendarDaysForMonth(monthValue, selectedValue) {
+    if (!isMonthInput(monthValue)) {
+        return [];
+    }
+
+    const [year, month] = monthValue.split('-').map(Number);
+    const firstDay = new Date(year, month - 1, 1, 12);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const startDate = new Date(year, month - 1, 1 - startOffset, 12);
+    const today = getTodayDate();
+
+    return Array.from({ length: 42 }, (_, index) => {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + index);
+        const value = [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, '0'),
+            String(date.getDate()).padStart(2, '0'),
+        ].join('-');
+
+        return {
+            value,
+            day: date.getDate(),
+            isCurrentMonth: date.getMonth() === month - 1,
+            isSelected: value === selectedValue,
+            isToday: value === today,
+        };
+    });
+}
+
+function dateSlideDirection(currentDate, nextDate) {
+    if (!isDateInput(currentDate) || !isDateInput(nextDate) || currentDate === nextDate) {
+        return slideDirection.value;
+    }
+
+    return nextDate > currentDate ? 'slide-next' : 'slide-prev';
+}
+
+function calendarDayClass(day) {
+    if (day.isSelected) {
+        return 'border-[#ED4264] bg-[#ED4264] text-white shadow-sm shadow-[#ED4264]/30';
+    }
+
+    if (day.isToday) {
+        return 'border-[#FFEDBC]/50 bg-[#FFEDBC]/10 text-[#FFEDBC]';
+    }
+
+    if (day.isCurrentMonth) {
+        return 'border-transparent text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800';
+    }
+
+    return 'border-transparent text-zinc-600 hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-400';
+}
+
+function openChecklistCalendar() {
+    if (isNavigating.value) {
+        return;
+    }
+
+    checklistCalendarMonth.value = monthFromDate(selectedDate.value);
+    showChecklistCalendar.value = !showChecklistCalendar.value;
+    showAdminCalendar.value = false;
+}
+
+function openAdminCalendar() {
+    if (isNavigating.value) {
+        return;
+    }
+
+    adminCalendarMonth.value = monthFromDate(adminDate.value);
+    showAdminCalendar.value = !showAdminCalendar.value;
+    showChecklistCalendar.value = false;
+}
+
+function adjustChecklistCalendarMonth(offset) {
+    checklistCalendarMonth.value = monthWithOffset(checklistCalendarMonth.value, offset);
+}
+
+function adjustAdminCalendarMonth(offset) {
+    adminCalendarMonth.value = monthWithOffset(adminCalendarMonth.value, offset);
+}
+
 function showAdminLogin() {
     if (isAdmin.value) {
         openAdmin();
@@ -410,6 +556,22 @@ function openChecklistForDate(date) {
     }
 
     visitChecklist({ date });
+}
+
+function openChecklistFromCalendar(nextDate) {
+    if (!isDateInput(nextDate)) {
+        setActionError({}, 'Tarikh senarai semak tidak sah.');
+        return;
+    }
+
+    showChecklistCalendar.value = false;
+
+    if (nextDate === selectedDate.value) {
+        return;
+    }
+
+    slideDirection.value = dateSlideDirection(selectedDate.value, nextDate);
+    openChecklistForDate(nextDate);
 }
 
 function visitChecklist({ date = null, fromWelcome = false } = {}) {
@@ -582,6 +744,22 @@ function openAdmin(date = null) {
     });
 }
 
+function openAdminFromCalendar(nextDate) {
+    if (!isDateInput(nextDate)) {
+        setActionError({}, 'Tarikh sejarah tidak sah.');
+        return;
+    }
+
+    showAdminCalendar.value = false;
+
+    if (nextDate === adminDate.value) {
+        return;
+    }
+
+    slideDirection.value = dateSlideDirection(adminDate.value, nextDate);
+    openAdmin(nextDate);
+}
+
 function adjustAdminDate(offset) {
     slideDirection.value = offset > 0 ? 'slide-next' : 'slide-prev';
     const nextDate = dateWithOffset(adminDate.value, offset);
@@ -643,6 +821,11 @@ function openTemplateEditor(template) {
     });
     templateEditorError.value = '';
     isConfirmingTemplateDeletion.value = false;
+}
+
+function openTemplateDeletion(template) {
+    openTemplateEditor(template);
+    isConfirmingTemplateDeletion.value = true;
 }
 
 function closeTemplateEditor(force = false) {
@@ -832,7 +1015,7 @@ function completedBy(entry) {
             </section>
 
             <section v-else-if="screen === 'checklist'" class="flex min-h-0 flex-1 flex-col max-w-6xl mx-auto w-full py-4 md:py-8">
-                <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md">
+                <header class="safe-area-header sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md">
                     <div class="min-w-0">
                         <p class="text-xs font-semibold tracking-wide text-zinc-500">FF SPOTLESS</p>
                         <p class="truncate text-sm font-semibold text-zinc-200">Hello, Kak Jihan!</p>
@@ -862,6 +1045,58 @@ function completedBy(entry) {
                             <div class="h-5 flex items-center justify-center">
                                 <Transition :name="slideDirection" mode="out-in">
                                     <p :key="selectedDate" class="truncate text-sm font-bold text-zinc-200">{{ displayDate }}</p>
+                                </Transition>
+                            </div>
+                            <div class="relative mt-2 flex justify-center">
+                                <button
+                                    type="button"
+                                    :disabled="isNavigating"
+                                    class="inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-zinc-200 outline-none transition hover:border-zinc-600 focus:border-[#ED4264] disabled:cursor-not-allowed disabled:opacity-50"
+                                    :aria-expanded="showChecklistCalendar"
+                                    aria-label="Buka kalendar senarai semak"
+                                    @click="openChecklistCalendar"
+                                >
+                                    <svg class="h-3.5 w-3.5 text-[#FFB0BE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+                                    </svg>
+                                    <span>Pilih tarikh</span>
+                                </button>
+
+                                <Transition
+                                    enter-active-class="transition duration-100 ease-out"
+                                    enter-from-class="translate-y-1 opacity-0"
+                                    enter-to-class="translate-y-0 opacity-100"
+                                    leave-active-class="transition duration-75 ease-in"
+                                    leave-from-class="translate-y-0 opacity-100"
+                                    leave-to-class="translate-y-1 opacity-0"
+                                >
+                                    <div v-if="showChecklistCalendar" class="absolute left-1/2 top-11 z-40 w-[18rem] -translate-x-1/2 rounded-2xl border border-zinc-700 bg-[#171717] p-3 text-left shadow-2xl shadow-black/50">
+                                        <div class="mb-3 flex items-center justify-between">
+                                            <button type="button" class="rounded-lg border border-zinc-700 bg-[#121212] p-2 text-zinc-400 transition hover:text-zinc-200" aria-label="Bulan sebelumnya" @click="adjustChecklistCalendarMonth(-1)">
+                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
+                                            </button>
+                                            <p class="text-sm font-bold text-zinc-100">{{ checklistCalendarMonthLabel }}</p>
+                                            <button type="button" class="rounded-lg border border-zinc-700 bg-[#121212] p-2 text-zinc-400 transition hover:text-zinc-200" aria-label="Bulan berikutnya" @click="adjustChecklistCalendarMonth(1)">
+                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
+                                            </button>
+                                        </div>
+                                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase text-zinc-500">
+                                            <span v-for="weekday in calendarWeekdays" :key="weekday" class="py-1">{{ weekday }}</span>
+                                        </div>
+                                        <div class="mt-1 grid grid-cols-7 gap-1">
+                                            <button
+                                                v-for="day in checklistCalendarDays"
+                                                :key="day.value"
+                                                type="button"
+                                                class="flex aspect-square items-center justify-center rounded-lg border text-xs font-bold transition"
+                                                :class="calendarDayClass(day)"
+                                                :aria-current="day.isSelected ? 'date' : undefined"
+                                                @click="openChecklistFromCalendar(day.value)"
+                                            >
+                                                {{ day.day }}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </Transition>
                             </div>
                         </div>
@@ -993,7 +1228,7 @@ function completedBy(entry) {
 
                 <!-- Right Pane -->
                 <div class="flex flex-1 flex-col min-h-0 bg-[#121212]">
-                    <header class="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md md:px-8">
+                    <header class="safe-area-header sticky top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-[#121212]/95 px-5 pb-4 pt-6 backdrop-blur-md md:px-8">
                         <div>
                             <p class="text-xs font-semibold tracking-wide text-[#FFB0BE] md:hidden">FF SPOTLESS</p>
                             <h1 class="text-base font-bold text-zinc-100 md:hidden">Admin Dashboard</h1>
@@ -1074,6 +1309,58 @@ function completedBy(entry) {
                                         <div class="h-5 flex items-center justify-center mt-0.5">
                                             <Transition :name="slideDirection" mode="out-in">
                                                 <p :key="adminDate" class="truncate text-sm font-bold text-zinc-200 transition-colors duration-300" :class="isAdminDateToday ? 'text-[#ED4264] font-semibold' : 'text-zinc-200'">{{ displayAdminDate }}</p>
+                                            </Transition>
+                                        </div>
+                                        <div class="relative mt-2 flex justify-center">
+                                            <button
+                                                type="button"
+                                                :disabled="isNavigating"
+                                                class="inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-700 bg-[#121212] px-3 text-xs font-semibold text-zinc-200 outline-none transition hover:border-zinc-600 focus:border-[#ED4264] disabled:cursor-not-allowed disabled:opacity-50"
+                                                :aria-expanded="showAdminCalendar"
+                                                aria-label="Buka kalendar sejarah"
+                                                @click="openAdminCalendar"
+                                            >
+                                                <svg class="h-3.5 w-3.5 text-[#FFB0BE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+                                                </svg>
+                                                <span>Pilih tarikh</span>
+                                            </button>
+
+                                            <Transition
+                                                enter-active-class="transition duration-100 ease-out"
+                                                enter-from-class="translate-y-1 opacity-0"
+                                                enter-to-class="translate-y-0 opacity-100"
+                                                leave-active-class="transition duration-75 ease-in"
+                                                leave-from-class="translate-y-0 opacity-100"
+                                                leave-to-class="translate-y-1 opacity-0"
+                                            >
+                                                <div v-if="showAdminCalendar" class="absolute left-1/2 top-11 z-40 w-[18rem] -translate-x-1/2 rounded-2xl border border-zinc-700 bg-[#171717] p-3 text-left shadow-2xl shadow-black/50">
+                                                    <div class="mb-3 flex items-center justify-between">
+                                                        <button type="button" class="rounded-lg border border-zinc-700 bg-[#121212] p-2 text-zinc-400 transition hover:text-zinc-200" aria-label="Bulan sebelumnya" @click="adjustAdminCalendarMonth(-1)">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m15 19-7-7 7-7" /></svg>
+                                                        </button>
+                                                        <p class="text-sm font-bold text-zinc-100">{{ adminCalendarMonthLabel }}</p>
+                                                        <button type="button" class="rounded-lg border border-zinc-700 bg-[#121212] p-2 text-zinc-400 transition hover:text-zinc-200" aria-label="Bulan berikutnya" @click="adjustAdminCalendarMonth(1)">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" /></svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase text-zinc-500">
+                                                        <span v-for="weekday in calendarWeekdays" :key="weekday" class="py-1">{{ weekday }}</span>
+                                                    </div>
+                                                    <div class="mt-1 grid grid-cols-7 gap-1">
+                                                        <button
+                                                            v-for="day in adminCalendarDays"
+                                                            :key="day.value"
+                                                            type="button"
+                                                            class="flex aspect-square items-center justify-center rounded-lg border text-xs font-bold transition"
+                                                            :class="calendarDayClass(day)"
+                                                            :aria-current="day.isSelected ? 'date' : undefined"
+                                                            @click="openAdminFromCalendar(day.value)"
+                                                        >
+                                                            {{ day.day }}
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </Transition>
                                         </div>
                                     </div>
@@ -1189,11 +1476,18 @@ function completedBy(entry) {
                                             <div class="space-y-2">
                                                 <div v-for="template in templatesFor(section.key)" :key="template.id" class="flex items-start justify-between gap-3 rounded-xl bg-[#121212] px-3 py-2.5">
                                                     <span class="min-w-0 flex-1 text-sm leading-snug text-zinc-300">{{ template.taskName ?? template.task_name ?? template.text }}</span>
-                                                    <button type="button" class="rounded-lg border border-zinc-600 p-1.5 text-zinc-300 transition hover:bg-zinc-700 hover:text-white" :aria-label="`Sunting ${template.taskName ?? template.task_name ?? template.text}`" @click="openTemplateEditor(template)">
-                                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                        </svg>
-                                                    </button>
+                                                    <div class="flex shrink-0 items-center gap-2">
+                                                        <button type="button" class="rounded-lg border border-[#ED4264]/40 p-1.5 text-rose-300 transition hover:bg-[#ED4264]/10 hover:text-rose-100" :aria-label="`Padam ${template.taskName ?? template.task_name ?? template.text}`" @click="openTemplateDeletion(template)">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916A2.25 2.25 0 0 0 13.5 2.25h-3A2.25 2.25 0 0 0 8.25 4.5v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" class="rounded-lg border border-zinc-600 p-1.5 text-zinc-300 transition hover:bg-zinc-700 hover:text-white" :aria-label="`Sunting ${template.taskName ?? template.task_name ?? template.text}`" @click="openTemplateEditor(template)">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1215,16 +1509,19 @@ function completedBy(entry) {
                     <form class="w-full max-w-md mx-auto rounded-2xl border border-zinc-600 bg-[#171717] p-5 shadow-2xl" @submit.prevent="updateTemplate">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 id="template-editor-title" class="text-base font-bold text-zinc-100">Edit tugasan</h2>
+                                <h2 id="template-editor-title" class="text-base font-bold text-zinc-100">{{ isConfirmingTemplateDeletion ? 'Padam tugasan' : 'Edit tugasan' }}</h2>
                                 <p class="mt-1 text-xs leading-relaxed text-zinc-500">Rekod lampau dan tugasan yang telah selesai tidak akan diubah.</p>
                             </div>
                             <button
                                 type="button"
                                 :disabled="isTemplateEditorProcessing"
-                                class="text-sm font-semibold text-zinc-500 hover:text-zinc-200 disabled:opacity-50"
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label="Tutup"
                                 @click="closeTemplateEditor()"
                             >
-                                Tutup
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         </div>
 
@@ -1346,4 +1643,15 @@ function completedBy(entry) {
     transform: translateX(16px);
     opacity: 0;
 }
+
+.safe-area-header {
+    padding-top: 1.5rem;
+}
+
+@supports (padding-top: max(0px)) {
+    .safe-area-header {
+        padding-top: max(1.5rem, calc(env(safe-area-inset-top) + 1rem));
+    }
+}
+
 </style>
